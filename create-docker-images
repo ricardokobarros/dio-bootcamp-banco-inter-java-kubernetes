@@ -1,0 +1,18 @@
+#/bin/bash
+echo -e "\nIniciando DB...\n"
+docker stop mysql57
+docker rm mysql57
+docker run --name mysql57 -p 3306:3306 -e MYSQL_ROOT_PASSWORD=123456 -e MYSQL_USER=java -e MYSQL_PASSWORD=1234 -e MYSQL_DATABASE=k8s_java -d mysql/mysql-server:5.7
+
+echo -e  "\nRodando a aplicação...\n"
+docker stop myapp
+docker rm myapp
+mvn -q clean install
+docker build  --force-rm -t java-k8s
+docker run --name myapp -p 8080:8080 -d -e DATABASE_SERVER_NAME=mysql57 --link mysql57:mysql57 java-k8s:latest 
+
+echo -e "\n Para testar a aplicação execute os comandos abaixo: \n"
+
+echo -e "curl -i -H 'Accept: application/json' -H 'Content-Type: application/json' -X GET http://localhost:8080/app/users \n"
+
+echo "curl -i -H 'Accept: application/json' -H 'Content-Type: application/json' -X GET http://localhost:8080/app/hello"
